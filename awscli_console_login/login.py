@@ -1,20 +1,22 @@
-import os.path
+import webbrowser
+from six.moves import urllib_parse
 
+import botocore.exceptions
+import requests
 from awscli.customizations.commands import BasicCommand
 
 
-class BrowserLogin(BasicCommand):
+class ConsoleLogin(BasicCommand):
     """Login to the AWS Console, opening the browser of choice."""
     NAME = 'console-login'
     DESCRIPTION = 'Logs into the AWS browser console'
-    # SYNOPSIS = ''
-    # EXAMPLES = ''
+    SYNOPSIS = 'aws console-login [--duration secs] [--browser browser-name]'
     ARG_TABLE = [
         {
-            'name': 'config',
+            'name': 'duration',
+            'default': '43200',
             'required': False,
-            'default': os.path.expanduser('~/.aws/config'),
-            'help_text': 'Path to config file (default: ~/.aws/config)',
+            'help_text': 'Duration of the session to create (default: 43200)',
         },
         {
             'name': 'browser',
@@ -24,19 +26,65 @@ class BrowserLogin(BasicCommand):
     ]
 
     def _run_main(self, parsed_args, parsed_globals):
-        # read credentials
-        # get token
-        # open console
-        pass
+        credentials = self._load_credentials()
+        signin_token = self._get_signin_token(credentials, parsed_args.duration)
+        self._open_console(signin_token, parsed_args.browser)
 
-    def _parse_credentials(self, config_path):
-        """Retrieve credentials from current session."""
-        pass
+    def _load_credentials(self):
+        """Retrieve credentials from current session.
 
-    def _get_login_token(self, credentials):
-        """Make a GET request to retrieve a sign-in token."""
-        pass
+        :return: the credentials of the current session, if any
+        :rtype: botocore.credentials.Credentials
+        :raises botocore.exceptions.NoCredentialsError:
+            if no credentials could be located
+        """
+        credentials = self._session.get_credentials()
+        if not credentials:
+            raise botocore.exceptions.NoCredentialsError()
+        return credentials
+
+    def _get_signin_token(self, credentials, duration):
+        """Make a GET request to retrieve a sign-in token.
+
+        :param credentials: the user credentials of the current session
+        :type crendentials: botocore.credentials.Credentials
+        :param duration: the number of seconds the console session should last
+        :type duration: int or str
+        :return: the newly-created sign-in token
+        :rtype: str
+        """
+        session_param = {
+            'sessionId': credentials.access_key,
+            'sessionKey': credentials.secret_key,
+            'sessionToken': credentials.token,
+        }
+        response = requests.get(
+            'https://signin.aws.amazon.com/federation',
+            params={
+                'Action': 'getSigninToken',
+                'SessionDuration': duration,
+                'Session': urllib_parse.quote_plus(str(session_param))
+            }
+        )
+        token_response = response.json()
+        return token_response['SigninToken']
 
     def _open_console(self, signin_token, browser=None):
-        """Open the console with the specified browser."""
-        pass
+        """Open the console with the specified browser.
+
+        :param signin_token: an AWS sign-in token
+        :type signin_token: str
+        :param browser: the browser in which to open the console
+        :type browser: str or None
+        """
+        url = (
+            'https://signin.aws.amazon.com/federation'
+            '?Action=login'
+            '&Issuer='
+            '&Destination={dest}'
+            '&SigninToken={token}'
+        ).format(
+            dest=urllib_parse.quote_plus('https://console.aws.amazon.com/'),
+            token=signin_token,
+        )
+        webbrowser.get(browser).open(url)
