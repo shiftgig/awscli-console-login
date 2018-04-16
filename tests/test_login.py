@@ -4,6 +4,7 @@ from contextlib import ExitStack
 from unittest import mock, TestCase
 
 import responses
+import requests
 from botocore.credentials import Credentials
 from botocore.exceptions import NoCredentialsError
 from botocore.session import Session
@@ -114,6 +115,19 @@ class GetSigninTokenTestCase(ConsoleLoginTestCase):
         self.assertIn(credentials.access_key, call.request.path_url)
         self.assertIn(credentials.secret_key, call.request.path_url)
         self.assertIn(str(credentials.token), call.request.path_url)
+
+    @responses.activate
+    def test_raise_error_on_failure_response(self):
+        responses.add(
+            responses.GET,
+            'https://signin.aws.amazon.com/federation',
+            status=401,
+            body='Unauthorized'
+        )
+
+        credentials = Credentials('access_key', 'secret_key')
+        with self.assertRaises(requests.HTTPError):
+            self.command._get_signin_token(credentials, '3600')
 
 
 class OpenConsoleTestCase(ConsoleLoginTestCase):

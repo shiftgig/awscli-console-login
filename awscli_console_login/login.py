@@ -52,6 +52,8 @@ class ConsoleLogin(BasicCommand):
         :type duration: int or str
         :return: the newly-created sign-in token
         :rtype: str
+        :raises requests.exceptions.RequestException:
+            if the AWS response has a status code >= 400
         """
         session_param = {
             'sessionId': credentials.access_key,
@@ -66,6 +68,8 @@ class ConsoleLogin(BasicCommand):
                 'Session': urllib_parse.quote_plus(str(session_param))
             }
         )
+        if not response.ok:
+            response.raise_for_status()
         token_response = response.json()
         return token_response['SigninToken']
 
