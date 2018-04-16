@@ -5,9 +5,11 @@ name = "pypi"
 
 [packages]
 awscli = "*"
+requests = "*"
 
 [dev-packages]
 ipdb = "*"
+responses = "*"
 
 [requires]
 python_version = "3.6"
