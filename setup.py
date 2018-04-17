@@ -10,7 +10,7 @@ def read_readme():
 
 
 setup(
-    name='aws-browser-login',
+    name='awscli-console-login',
     version='0.0.1',
     # url='',
     author='Lamar Meigs, Jacob Dougherty, Shiftgig, Inc',
