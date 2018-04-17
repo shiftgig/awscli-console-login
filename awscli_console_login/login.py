@@ -65,8 +65,8 @@ class ConsoleLogin(BasicCommand):
             params={
                 'Action': 'getSigninToken',
                 'SessionDuration': duration,
-                'Session': urllib_parse.quote_plus(str(session_param))
-            }
+                'Session': str(session_param),
+            },
         )
         if not response.ok:
             response.raise_for_status()
