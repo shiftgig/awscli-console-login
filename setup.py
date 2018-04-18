@@ -13,7 +13,7 @@ def read_readme():
 
 setup(
     name='awscli-console-login',
-    version='0.0.1',
+    version='0.1.0',
     url='https://github.com/shiftgig/awscli-console-login',
     author='Lamar Meigs, Jacob Dougherty, Shiftgig, Inc',
     author_email='lmeigs@shiftgig.com, jacob@shiftgig.com',

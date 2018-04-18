@@ -23,7 +23,7 @@ $ aws console-login --profile poc
 
 ## Sponsors
 
-This plugin was made possible by [Shiftgig](https://www.shiftgig.com/)
+This plugin was made possible by [Shiftgig](https://www.shiftgig.com/).
 
 
 ## License
