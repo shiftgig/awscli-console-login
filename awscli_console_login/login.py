@@ -37,10 +37,23 @@ class ConsoleLogin(BasicCommand):
         :rtype: botocore.credentials.Credentials
         :raises botocore.exceptions.NoCredentialsError:
             if no credentials could be located
+        :raises botocore.exceptions.PartialCredentialsError:
+            if the obtained credentials do not resolve a session token
         """
         credentials = self._session.get_credentials()
         if not credentials:
             raise botocore.exceptions.NoCredentialsError()
+
+        # TODO: Obtain a session token if one is not included in the loaded
+        # credentials.
+        # Console login can be accomplished only if the loaded credentials
+        # include a session token, eg. for a profile that assumes a role. It
+        # will not work if the creds provide a direct Access Key and Secret Key
+        if not credentials.token:
+            raise botocore.exceptions.PartialCredentialsError(
+                provider=credentials.method,
+                cred_var='token'
+            )
         return credentials
 
     def _get_signin_token(self, credentials, duration):

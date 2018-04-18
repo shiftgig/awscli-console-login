@@ -6,7 +6,7 @@ from unittest import mock, TestCase
 import responses
 import requests
 from botocore.credentials import Credentials
-from botocore.exceptions import NoCredentialsError
+from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 from botocore.session import Session
 
 from awscli_console_login.login import ConsoleLogin
@@ -76,7 +76,7 @@ class RunMainTestCase(ConsoleLoginTestCase):
 
 class LoadCredentialsTestCase(ConsoleLoginTestCase):
     def test_return_botocore_credentials(self):
-        dummy_credentials = Credentials('access_key', 'secret_key')
+        dummy_credentials = Credentials('access_key', 'secret_key', 'token')
         with mock.patch.object(
             self.command._session,
             'get_credentials',
@@ -92,6 +92,16 @@ class LoadCredentialsTestCase(ConsoleLoginTestCase):
             return_value=None
         ):
             with self.assertRaises(NoCredentialsError):
+                self.command._load_credentials()
+
+    def test_raise_error_on_missing_token(self):
+        dummy_credentials = Credentials('access_key', 'secret_key', token=None)
+        with mock.patch.object(
+            self.command._session,
+            'get_credentials',
+            return_value=dummy_credentials
+        ):
+            with self.assertRaises(PartialCredentialsError):
                 self.command._load_credentials()
 
 
